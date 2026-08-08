@@ -27,6 +27,26 @@ port=$(( VNC_PORT - 5900 ))
 LOSSY_OPT=""
 enabled "$LOSSY" && LOSSY_OPT=",lossy=on"
 
+configureNvidiaGbmBackend() {
+  local allocator=""
+  local backend_dir="/run/helios/gbm"
+
+  allocator=$(
+    ldconfig -p 2>/dev/null |
+      awk '$1 == "libnvidia-allocator.so.1" && !found { print $NF; found=1 }'
+  )
+
+  if [ -z "$allocator" ] || [ ! -r "$allocator" ]; then
+    error "NVIDIA GBM was requested, but libnvidia-allocator.so.1 is absent from the container linker cache."
+    error "Ensure NVIDIA Container Toolkit exposes the graphics driver capability."
+    exit 88
+  fi
+
+  mkdir -p "$backend_dir"
+  ln -sfn "$allocator" "$backend_dir/nvidia-drm_gbm.so"
+  export GBM_BACKENDS_PATH="$backend_dir"
+}
+
 case "${DISPLAY,,}" in
   "vnc" )
     DISPLAY_OPTS="-display vnc=:${port}${LOSSY_OPT} -vga ${VGA}"
@@ -51,6 +71,10 @@ if enabled "$HELIOS"; then
   if [ ! -c "$RENDERNODE" ] || [ ! -r "$RENDERNODE" ] || [ ! -w "$RENDERNODE" ]; then
     error "Helios render device '$RENDERNODE' is unavailable or inaccessible."
     exit 87
+  fi
+
+  if [ "${GBM_BACKEND:-}" = "nvidia-drm" ]; then
+    configureNvidiaGbmBackend
   fi
 
   DISPLAY_OPTS="-display egl-headless,rendernode=$RENDERNODE"

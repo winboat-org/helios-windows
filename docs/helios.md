@@ -33,7 +33,6 @@ environment:
   __VK_LAYER_NV_optimus: NVIDIA_only
   VK_ICD_FILENAMES: /etc/vulkan/icd.d/nvidia_icd.json
   GBM_BACKEND: nvidia-drm
-  GBM_BACKENDS_PATH: /usr/lib/gbm:/usr/lib/x86_64-linux-gnu/gbm
 deploy:
   resources:
     reservations:
@@ -49,8 +48,20 @@ the container also needs its matching userspace graphics libraries.
 WinBoat accepts either a registered `nvidia` runtime or an NVIDIA CDI spec that
 names the selected UUID; use `nvidia-ctk cdi list` to inspect CDI devices.
 The NVIDIA environment keeps QEMU's GBM, EGL, GLX, and Vulkan providers on the
-same driver. `GBM_BACKENDS_PATH` includes both the toolkit's common injection
-directory and Debian's native GBM directory.
+same driver. At container startup, Helios resolves the toolkit-injected
+`libnvidia-allocator.so.1` through the dynamic linker cache and exposes its GBM
+backend from `/run/helios/gbm`. Host distribution library paths are not encoded
+in the image or Compose configuration.
+
+If Docker reports `failed to fulfil mount request` for a versioned
+`libnvidia-*.so` path, the failure occurs before the Helios entrypoint runs.
+Recreate the container after changing the host NVIDIA driver so Docker can
+resolve the current driver mounts. If a newly created container has the same
+error, repair the host driver/toolkit installation, run `sudo ldconfig`, and
+refresh the CDI specification with
+`sudo systemctl restart nvidia-cdi-refresh.service`
+(NVIDIA Container Toolkit 1.18 or newer). `nvidia-ctk --debug cdi list` reports
+which specification still references a missing host path.
 
 Set `HELIOS_BOOTSTRAP=Y` while installing the Windows driver to keep a standard
 VGA device available. Set it back to `N` after the driver-restart checkpoint.
