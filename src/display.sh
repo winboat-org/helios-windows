@@ -74,6 +74,10 @@ if enabled "$HELIOS"; then
   fi
 
   if [ "${GBM_BACKEND:-}" = "nvidia-drm" ]; then
+    # NVIDIA Container Toolkit injects its ICD into the loader's standard
+    # search paths. Select it by the manifest contract instead of encoding a
+    # distribution-specific filename (for example, nvidia_icd.x86_64.json).
+    export VK_LOADER_DRIVERS_SELECT="nvidia*"
     configureNvidiaGbmBackend
   fi
 

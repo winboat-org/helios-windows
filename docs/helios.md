@@ -31,7 +31,6 @@ environment:
   __EGL_VENDOR_LIBRARY_FILENAMES: /usr/share/glvnd/egl_vendor.d/10_nvidia.json
   __GLX_VENDOR_LIBRARY_NAME: nvidia
   __VK_LAYER_NV_optimus: NVIDIA_only
-  VK_ICD_FILENAMES: /etc/vulkan/icd.d/nvidia_icd.json
   GBM_BACKEND: nvidia-drm
 deploy:
   resources:
@@ -48,10 +47,14 @@ the container also needs its matching userspace graphics libraries.
 WinBoat accepts either a registered `nvidia` runtime or an NVIDIA CDI spec that
 names the selected UUID; use `nvidia-ctk cdi list` to inspect CDI devices.
 The NVIDIA environment keeps QEMU's GBM, EGL, GLX, and Vulkan providers on the
-same driver. At container startup, Helios resolves the toolkit-injected
-`libnvidia-allocator.so.1` through the dynamic linker cache and exposes its GBM
-backend from `/run/helios/gbm`. Host distribution library paths are not encoded
-in the image or Compose configuration.
+same driver. At container startup, Helios selects NVIDIA manifests from the
+Vulkan loader's standard discovery paths, which supports both generic names
+such as `nvidia_icd.json` and architecture-specific names such as
+`nvidia_icd.x86_64.json`. Do not set `VK_ICD_FILENAMES` or `VK_DRIVER_FILES` in
+Compose. Helios also resolves the toolkit-injected `libnvidia-allocator.so.1`
+through the dynamic linker cache and exposes its GBM backend from
+`/run/helios/gbm`. Host distribution library paths are not encoded in the image
+or Compose configuration.
 
 If Docker reports `failed to fulfil mount request` for a versioned
 `libnvidia-*.so` path, the failure occurs before the Helios entrypoint runs.
