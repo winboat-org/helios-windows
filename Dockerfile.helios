@@ -46,8 +46,12 @@ RUN git init /src/virglrenderer \
     && git -C /src/virglrenderer remote add origin https://gitlab.freedesktop.org/virgl/virglrenderer.git \
     && git -C /src/virglrenderer fetch --depth=1 origin "$VIRGL_REF" \
     && git -C /src/virglrenderer checkout --detach FETCH_HEAD
-COPY patches/virglrenderer-device-memory-budget.patch /tmp/
-RUN git -C /src/virglrenderer apply /tmp/virglrenderer-device-memory-budget.patch \
+COPY patches/virglrenderer-device-memory-budget.patch \
+     patches/virglrenderer-opaque-resource-import.patch \
+     /tmp/
+RUN git -C /src/virglrenderer apply \
+      /tmp/virglrenderer-device-memory-budget.patch \
+      /tmp/virglrenderer-opaque-resource-import.patch \
     && meson setup /src/virglrenderer/build /src/virglrenderer \
       --prefix=/opt/helios \
       --libdir=lib \
