@@ -1,10 +1,7 @@
 diff --git a/src/proxy/proxy_context.c b/src/proxy/proxy_context.c
 --- a/src/proxy/proxy_context.c
 +++ b/src/proxy/proxy_context.c
-@@ -455,12 +455,13 @@ proxy_context_attach_resource(struct virgl_context *base, struct virgl_resource
-    if (proxy_context_resource_find(ctx, res_id))
-       return;
- 
+@@ -458,9 +458,10 @@ proxy_context_attach_resource(struct virgl_context *base, struct virgl_resource
 -   /* The current render protocol only supports importing dma-buf, shm or pipe resource
 -    * that can be exported to dma-buf. A protocol change is needed when there exists use
 -    * case for importing external Vulkan opaque resource.
